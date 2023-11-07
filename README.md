@@ -31,5 +31,5 @@ numberというタグを持ち，要素を指定する．
 ### `/logs_`~ : [String](https://docs.ros2.org/foxy/api/std_msgs/msg/String.html)
 
 # grafanaダッシュボード
-- [作成方法説明動画(部内のみ)](https://kanazawa-it.box.com/s/rotyxhllkw13mdpjql7mztinkcrqkv9a)
+- [作成方法説明動画(部内のみ)](https://kanazawa-it.box.com/s/9itengyy7x4wf3b1ny0t0b2cgt7bi4h4)
 - テンプレート : `scripts/dashboard/topic_monitor.json`
