@@ -53,8 +53,6 @@ from ros2topic.api import get_msg_class
 from ros2topic.api import TopicNameCompleter
 from ros2topic.verb import VerbExtension
 
-import data
-
 DEFAULT_WINDOW_SIZE = 10000
 
 
@@ -269,13 +267,6 @@ def _rostopic_hz(args, node, window_size=DEFAULT_WINDOW_SIZE, filter_expr=None, 
         depth=window_size,
     )
 
-    # log data
-    data_node_list: list[Node] = []
-    for topic in args.log_topic_list:
-        subscriber = data.Subscriber(topic, args.update_float_cb)
-        # exec.add_node(subscriber)
-        data_node_list.append(subscriber)
-
     rt = ROSTopicHz(node, window_size, filter_expr=filter_expr, use_wtime=use_wtime)
 
     for topic in args.topic_list:
@@ -293,11 +284,8 @@ def _rostopic_hz(args, node, window_size=DEFAULT_WINDOW_SIZE, filter_expr=None, 
             functools.partial(rt.callback_hz, topic=topic), qos_profile)
 
     while rclpy.ok():
-        # log topic
-        for data_node in data_node_list:
-            rclpy.spin_once(data_node)
-
         rclpy.spin_once(node)
+        # print(node)
         hz_dict = {}
         for topic in args.topic_list:
             get_hz = rt.get_hz(topic)
@@ -306,7 +294,6 @@ def _rostopic_hz(args, node, window_size=DEFAULT_WINDOW_SIZE, filter_expr=None, 
         if args.update_hz_cb is not None:
             # print(hz_dict)
             args.update_hz_cb(hz_dict)
-
 
     node.destroy_node()
     rclpy.shutdown()

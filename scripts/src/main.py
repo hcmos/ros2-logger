@@ -17,6 +17,7 @@ import subprocess
 from datetime import datetime
 import re
 import threading
+from multiprocessing import Process
 import influxdb_client
 
 import hz
@@ -76,20 +77,36 @@ def update_float_cb(float_dict: dict[(str, int), float]):
     thread = threading.Thread(target=run, args=(float_dict, ))
     thread.start()
 
+def update_str_cb(str_dict: dict[str, str]):
+    def run(str_dict):
+        measurement_datetime = int(datetime.now().timestamp() * 1e9)
+        for topic, data in str_dict.items():
+            db.write_point(measurement_datetime, 'topic_data_str', topic, None, data)
+    thread = threading.Thread(target=run, args=(str_dict, ))
+    thread.start()
 
-def subscribe_topic(topic_list: list[str], window_size: int):
+
+def subscribe_hz(topic_list: list[str], window_size: int):
     hz_verb = hz.HzVerb()
     parser = argparse.ArgumentParser()
     hz_verb.add_arguments(parser, 'ros2_monitor_grafana')
     args = parser.parse_args('')
     args.topic_list = topic_list
-    args.log_topic_list = make_log_topic_list(topic_list)
     args.window_size = window_size
 
     args.update_hz_cb = update_hz_cb
-    args.update_float_cb = update_float_cb
     hz.main(args)
     # not reached here
+
+def subscribe_data(topic_list: list[str], window_size: int):
+    parser = argparse.ArgumentParser()
+    args = parser.parse_args('')
+    args.topic_list = topic_list
+    args.window_size = window_size
+
+    args.update_float_cb = update_float_cb
+    args.update_str_cb = update_str_cb
+    data.main(args)
 
 
 def make_topic_list(ignore_regexp: str, target_regexp: str) -> list[str]:
@@ -142,10 +159,15 @@ def main():
     db = InfluxDbAccessor(args.url, args.token, args.org, args.bucket_name)
     db.create_bucket()
 
-    print('\033[32m'+'留意'+'\033[0m' + ': 下記にWARNINGが発生したものは周波数を取ることが出来ません.問題がある場合は再実行してください.')
+    print('\033[32m'+'注意'+'\033[0m' + ': 下記にWARNINGが発生したものは周波数を取ることが出来ません.問題がある場合は再実行してください.')
 
     topic_list = make_topic_list(args.ignore_regexp, args.target_regexp)
-    subscribe_topic(topic_list, args.window_size)
+    log_topic_list =make_log_topic_list(topic_list)
+
+    p_hz = Process(target=subscribe_hz, args=(topic_list, args.window_size))
+    p_data = Process(target=subscribe_data, args=(log_topic_list, args.window_size))
+    p_hz.start()
+    p_data.start()
 
 
 if __name__ == '__main__':

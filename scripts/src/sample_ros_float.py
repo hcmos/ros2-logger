@@ -47,10 +47,10 @@ def main(args=None):
     exec = MultiThreadedExecutor()
 
     node_list: list[Node] = []
-    for i in [100, 1000]:
+    for i in [100,500]:
         interval_sec = i / 1000
-        minimal_publisher = MinimalPublisher(f'log_{i}_ms', interval_sec)
-        minimal_subscriber = MinimalSubscriber(f'log_{i}_ms')
+        minimal_publisher = MinimalPublisher(f'logf_{i}_ms', interval_sec)
+        minimal_subscriber = MinimalSubscriber(f'logf_{i}_ms')
         exec.add_node(minimal_publisher)
         exec.add_node(minimal_subscriber)
         node_list.append(minimal_publisher)
